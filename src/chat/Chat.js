@@ -1,9 +1,13 @@
 import React from 'react';
+import axios from 'axios';
 import { ChannelList } from './ChannelList';
 import './chat.scss';
 import { MessagesPanel } from './MessagesPanel';
 import socketClient from "socket.io-client";
-const SERVER = "http://127.0.0.1:8080";
+
+const SOCKET_SERVER = "http://127.0.0.1:8085";
+const SERVER = "http://127.0.0.1:8080/api";
+
 export class Chat extends React.Component {
 
     state = {
@@ -18,7 +22,7 @@ export class Chat extends React.Component {
     }
 
     configureSocket = () => {
-        var socket = socketClient(SERVER);
+        const socket = socketClient(SOCKET_SERVER);
         socket.on('connection', () => {
             if (this.state.channel) {
                 this.handleChannelSelect(this.state.channel.id);
@@ -52,9 +56,8 @@ export class Chat extends React.Component {
     }
 
     loadChannels = async () => {
-        fetch('http://localhost:8080/getChannels').then(async response => {
-            let data = await response.json();
-            this.setState({ channels: data.channels });
+        axios.get(SERVER + '/get-channels').then(response => {
+                this.setState({ channels: response.data.channels });
         })
     }
 
@@ -68,6 +71,12 @@ export class Chat extends React.Component {
     }
 
     handleSendMessage = (channel_id, text) => {
+        let data = {channel_id, text, senderName: this.socket.id, id: Date.now()};
+
+        axios.post(SERVER+'/send-message',data).then(response => {
+            console.log(response.data);
+        })
+
         this.socket.emit('send-message', { channel_id, text, senderName: this.socket.id, id: Date.now() });
     }
 
