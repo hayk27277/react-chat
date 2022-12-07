@@ -66,6 +66,9 @@ export class Chat extends React.Component {
         let channel = this.state.channels.find(c => {
             return c.id === id;
         });
+        axios.get(`${SERVER}/group/${id}/messages`).then(response => {
+            channel.messages = response.data.data;
+        })
         this.setState({channel});
         this.socket.emit('channel-join', id, ack => {
         });
@@ -77,8 +80,6 @@ export class Chat extends React.Component {
         }).then(response => {
             console.log(response.data);
         })
-
-        this.socket.emit('send-message', {channel_id, text, senderName: this.socket.id, id: Date.now()});
     }
 
     render() {

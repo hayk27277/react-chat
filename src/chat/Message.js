@@ -1,11 +1,11 @@
 import React from 'react';
 
 
-export const Message = ({senderName, text}) => {
+export const Message = ({sender, message}) => {
     return (
         <div className='message-item'>
-            <div><b>{senderName}</b></div>
-            <span>{text}</span>
+            <div><b>{sender}</b></div>
+            <span>{message}</span>
         </div>
     )
 }
