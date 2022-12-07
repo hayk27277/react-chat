@@ -1,8 +1,8 @@
 import React from 'react';
 import axios from 'axios';
-import { ChannelList } from './ChannelList';
+import {ChannelList} from './ChannelList';
 import './chat.scss';
-import { MessagesPanel } from './MessagesPanel';
+import {MessagesPanel} from './MessagesPanel';
 import socketClient from "socket.io-client";
 
 const SOCKET_SERVER = "http://127.0.0.1:8085";
@@ -16,6 +16,7 @@ export class Chat extends React.Component {
         channel: null
     }
     socket;
+
     componentDidMount() {
         this.loadChannels();
         this.configureSocket();
@@ -29,17 +30,17 @@ export class Chat extends React.Component {
             }
         });
         socket.on('channel', channel => {
-            
+
             let channels = this.state.channels;
             channels.forEach(c => {
                 if (c.id === channel.id) {
                     c.participants = channel.participants;
                 }
             });
-            this.setState({ channels });
+            this.setState({channels});
         });
         socket.on('message', message => {
-            
+
             let channels = this.state.channels
             channels.forEach(c => {
                 if (c.id === message.channel_id) {
@@ -50,14 +51,14 @@ export class Chat extends React.Component {
                     }
                 }
             });
-            this.setState({ channels });
+            this.setState({channels});
         });
         this.socket = socket;
     }
 
     loadChannels = async () => {
-        axios.get(SERVER + '/get-channels').then(response => {
-                this.setState({ channels: response.data.channels });
+        axios.get(SERVER + '/groups').then(response => {
+            this.setState({channels: response.data.data});
         })
     }
 
@@ -65,27 +66,26 @@ export class Chat extends React.Component {
         let channel = this.state.channels.find(c => {
             return c.id === id;
         });
-        this.setState({ channel });
+        this.setState({channel});
         this.socket.emit('channel-join', id, ack => {
         });
     }
 
     handleSendMessage = (channel_id, text) => {
-        let data = {channel_id, text, senderName: this.socket.id, id: Date.now()};
-
-        axios.post(SERVER+'/send-message',data).then(response => {
+        axios.post(`${SERVER}/group/${channel_id}/messages`, {
+            message: text
+        }).then(response => {
             console.log(response.data);
         })
 
-        this.socket.emit('send-message', { channel_id, text, senderName: this.socket.id, id: Date.now() });
+        this.socket.emit('send-message', {channel_id, text, senderName: this.socket.id, id: Date.now()});
     }
 
     render() {
-
         return (
             <div className='chat-app'>
-                <ChannelList channels={this.state.channels} onSelectChannel={this.handleChannelSelect} />
-                <MessagesPanel onSendMessage={this.handleSendMessage} channel={this.state.channel} />
+                <ChannelList channels={this.state.channels} onSelectChannel={this.handleChannelSelect}/>
+                <MessagesPanel onSendMessage={this.handleSendMessage} channel={this.state.channel}/>
             </div>
         );
     }
