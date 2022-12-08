@@ -6,6 +6,7 @@ export const ChannelList = ({ onSelectChannel, channels }) => {
 
     return (
         <div className="channel-list">
+            <input type="text" className="channel-search" placeholder={"search..."}/>
             {channels && channels.map ? (
                 channels.map((c) => (
                     <Channel

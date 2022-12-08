@@ -16,9 +16,11 @@ export class MessagesPanel extends React.Component {
 
     render() {
         let list = <div className="no-content-message">There is no messages to show</div>;
-
+        console.log(this.props.channel && this.props.channel.messages);
         if (this.props.channel && this.props.channel.messages) {
-            list = this.props.channel.messages.map(m => <Message key={m.id} id={m.id} sender={m.sender} message={m.message} />);
+            list = this.props.channel.messages.map(m =>
+                <Message key={m.id} id={m.id} sender={m.sender} send_at={m.send_at} message={m.message} isMyMessage={m.sender_id === this.props.user.id}
+                />);
         }
 
         return (

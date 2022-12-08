@@ -17,12 +17,19 @@ export class Chat extends React.Component {
 
     componentDidMount() {
         this.loadChannels();
+        this.loadUser();
     }
 
 
     loadChannels = async () => {
         axios.get(SERVER + '/message-history').then(response => {
             this.setState({channels: response.data.data});
+        })
+    }
+
+    loadUser = async () => {
+        axios.get(SERVER + '/user').then(response => {
+            this.setState({user: response.data.data});
         })
     }
 
@@ -59,7 +66,7 @@ export class Chat extends React.Component {
         return (
             <div className='chat-app'>
                 <ChannelList channels={this.state.channels} onSelectChannel={this.handleChannelSelect}/>
-                <MessagesPanel onSendMessage={this.handleSendMessage} channel={this.state.channel}/>
+                <MessagesPanel onSendMessage={this.handleSendMessage} channel={this.state.channel} user={this.state.user}/>
             </div>
         );
     }
