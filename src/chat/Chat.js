@@ -5,8 +5,8 @@ import './chat.scss';
 import {MessagesPanel} from './MessagesPanel';
 import socketClient from "socket.io-client";
 
-const SOCKET_SERVER = "http://127.0.0.1:8085";
-const SERVER = "http://127.0.0.1:8080/api";
+const SOCKET_SERVER = "http://127.0.0.1:8088";
+const SERVER = "http://127.0.0.1:8085/api";
 
 export class Chat extends React.Component {
 
@@ -57,7 +57,7 @@ export class Chat extends React.Component {
     }
 
     loadChannels = async () => {
-        axios.get(SERVER + '/groups').then(response => {
+        axios.get(SERVER + '/message-history').then(response => {
             this.setState({channels: response.data.data});
         })
     }
@@ -66,20 +66,41 @@ export class Chat extends React.Component {
         let channel = this.state.channels.find(c => {
             return c.id === id;
         });
-        axios.get(`${SERVER}/group/${id}/messages`).then(response => {
-            channel.messages = response.data.data;
-        })
+        if(channel.type == 'direct'){
+            axios.get(`${SERVER}/user/${channel.messageable_id}/messages`).then(response => {
+                channel.messages = response.data.data;
+            })
+        }
+        else{
+            axios.get(`${SERVER}/group/${channel.messageable_id}/messages`).then(response => {
+                channel.messages = response.data.data;
+            })
+        }
+
         this.setState({channel});
         this.socket.emit('channel-join', id, ack => {
         });
     }
 
     handleSendMessage = (channel_id, text) => {
-        axios.post(`${SERVER}/group/${channel_id}/messages`, {
-            message: text
-        }).then(response => {
-            console.log(response.data);
-        })
+        let channel = this.state.channels.find(c => {
+            return c.id === channel_id;
+        });
+
+        if(channel.type == 'direct'){
+            axios.post(`${SERVER}/user/${channel.messageable_id}/messages`, {
+                message: text
+            }).then(response => {
+                console.log(response.data);
+            })
+        }else {
+            axios.post(`${SERVER}/group/${channel.messageable_id}/messages`, {
+                message: text
+            }).then(response => {
+                console.log(response.data);
+            })
+        }
+
     }
 
     render() {
