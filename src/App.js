@@ -1,27 +1,31 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.scss';
+import {Routes, Route, useNavigate} from "react-router-dom"
+import Login from "./login/Login"
+import React, {useEffect} from 'react';
 
+import {Chat} from "./chat/Chat"
+import Register from "./register/Register";
 
 function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+    const token = localStorage.getItem('token');
+
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        if (token) {
+            navigate("/chat");
+        }
+    }, [token]);
+
+
+    return (
+        <div className="App">
+            <Routes>
+                <Route path="/" element={token === null ? <Login/> : <Chat/>}/>
+                <Route path="/register" element={token === null ? <Register/> : <Chat/>}/>
+                <Route path="/chat" element={<Chat/>}/>
+            </Routes>
+        </div>
+    )
 }
 
-export default App;
+export default App

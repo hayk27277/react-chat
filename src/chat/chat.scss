@@ -64,6 +64,7 @@
     border: 1px solid rgb(224, 224, 224);
     margin: 10px;
     margin-left: 0;
+    min-height: 300px;
     height: calc(100% - 22px);
     display: flex;
     flex-direction: column;
@@ -73,6 +74,8 @@
     .messages-list {
       align-self: stretch;
       height: 100%;
+      max-height: 450px;
+      overflow-y: scroll;
       max-width: 800px;
       justify-content: end;
     }

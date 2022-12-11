@@ -1,10 +1,26 @@
-import React from 'react';
+import React, {Component, useEffect} from 'react';
+
 import axios from 'axios';
 import {ChannelList} from './ChannelList';
 import './chat.scss';
 import {MessagesPanel} from './MessagesPanel';
 
-const SERVER = "http://127.0.0.1:8085/api";
+const instance = axios.create({
+    baseURL:  process.env.REACT_APP_SERVER_URL
+});
+
+instance.interceptors.request.use(
+    function (config) {
+        const token = localStorage.getItem("token");
+        if (token) {
+            config.headers["Authorization"] = 'Bearer ' + token;
+        }
+        return config;
+    },
+    function (error) {
+        return Promise.reject(error);
+    }
+);
 
 export class Chat extends React.Component {
 
@@ -22,29 +38,52 @@ export class Chat extends React.Component {
 
 
     loadChannels = async () => {
-        axios.get(SERVER + '/message-history').then(response => {
+        instance.get('/message-history').then(response => {
             this.setState({channels: response.data.data});
         })
     }
 
     loadUser = async () => {
-        axios.get(SERVER + '/user').then(response => {
+        instance.get('/user').then(response => {
             this.setState({user: response.data.data});
         })
     }
 
-    handleChannelSelect = id => {
+    handleChannelSelect = async id => {
         let channel = this.state.channels.find(c => {
             return c.id === id;
         });
 
         const entity = channel.type === 'direct' ? 'user' : 'group';
 
-        axios.get(`${SERVER}/${entity}/${channel.messageable_id}/messages`).then(response => {
-            channel.messages = response.data.data;
-        })
+        try {
+            const response = (await instance.get(`/${entity}/${channel.messageable_id}/messages`))
 
-        this.setState({channel});
+            channel.messages = response.data.data;
+
+            this.setState({channel});
+        } catch (e) {
+            alert(e.response.data.message);
+        }
+    }
+
+    handleChatSearch = event => {
+        let search_query = event.target.value;
+
+        if (search_query) {
+            instance.get(`/search?search_query=${search_query}`).then(response => {
+                const channels = response.data.data
+                channels.map((chanel, index) => {
+                    chanel.id = index + 1
+                })
+                this.setState({channels});
+            })
+        }
+    }
+
+    handleLogout = () => {
+        localStorage.removeItem('token');
+        window.location.href = '/';
     }
 
     handleSendMessage = (channel_id, text) => {
@@ -52,12 +91,12 @@ export class Chat extends React.Component {
             return c.id === channel_id;
         });
 
-        const entity = channel.type == 'direct' ? 'user' : 'group';
+        const entity = channel.type === 'direct' ? 'user' : 'group';
 
-        axios.post(`${SERVER}/${entity}/${channel.messageable_id}/messages`, {
+        instance.post(`/${entity}/${channel.messageable_id}/messages`, {
             message: text
-        }).then(response => {
-            console.log(response.data);
+        }).then(() => {
+            this.handleChannelSelect(channel.id)
         })
 
     }
@@ -65,8 +104,14 @@ export class Chat extends React.Component {
     render() {
         return (
             <div className='chat-app'>
-                <ChannelList channels={this.state.channels} onSelectChannel={this.handleChannelSelect}/>
-                <MessagesPanel onSendMessage={this.handleSendMessage} channel={this.state.channel} user={this.state.user}/>
+                <ChannelList channels={this.state.channels} onSelectChannel={this.handleChannelSelect}
+                             onChatSearch={this.handleChatSearch}/>
+                <MessagesPanel onSendMessage={this.handleSendMessage} channel={this.state.channel}
+                               user={this.state.user}/>
+
+                <span onClick={this.handleLogout}>
+                    Logout
+                </span>
             </div>
         );
     }
