@@ -1,14 +1,21 @@
 import {Routes, Route, useNavigate} from "react-router-dom"
 import Login from "./login/Login"
-import React, {useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
 
 import {Chat} from "./chat/Chat"
 import Register from "./register/Register";
 
 function App() {
-    const token = localStorage.getItem('token');
+    const [token, setToken] = useState(null)
 
     const navigate = useNavigate();
+
+    useEffect(() => {
+        const storageToken = localStorage.getItem('token')
+        if(storageToken !== token) {
+            setToken(storageToken)
+        }
+    })
 
     useEffect(() => {
         if (token) {
