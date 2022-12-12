@@ -18,7 +18,7 @@ function Login() {
         }).then((response) => {
             localStorage.setItem("token", response.data.token);
             navigate("/chat");
-        })
+        }).catch(error => {   alert(  error.response.data.message    )})
     };
 
     return (

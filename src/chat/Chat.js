@@ -91,6 +91,9 @@ export const Chat = () => {
                 });
             })
         }
+        else{
+            loadChannels() 
+        }
     }
 
     const handleLogout = () => {
