@@ -1,4 +1,4 @@
-import React, {Component, useEffect} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 
 import axios from 'axios';
 import {ChannelList} from './ChannelList';
@@ -22,35 +22,36 @@ instance.interceptors.request.use(
     }
 );
 
-export class Chat extends React.Component {
+export const Chat = () => {
 
-    state = {
+    const [state, setState] = useState({
         channels: null,
         socket: null,
         channel: null
-    }
-    socket;
+    })
 
-    componentDidMount() {
-        this.loadChannels();
-        this.loadUser();
-    }
+    const socketRef = useRef(null);
+
+    useEffect(() => {
+        loadChannels();
+        loadUser();
+    }, [])
 
 
-    loadChannels = async () => {
+    const loadChannels = async () => {
         instance.get('/message-history').then(response => {
-            this.setState({channels: response.data.data});
+            setState((state) => ({...state, channels: response.data.data}));
         })
     }
 
-    loadUser = async () => {
+    const loadUser = async () => {
         instance.get('/user').then(response => {
-            this.setState({user: response.data.data});
+            setState((state) => ({...state, user: response.data.data}));
         })
     }
 
-    handleChannelSelect = async id => {
-        let channel = this.state.channels.find(c => {
+    const handleChannelSelect = async id => {
+        let channel = state.channels.find(c => {
             return c.id === id;
         });
 
@@ -59,35 +60,46 @@ export class Chat extends React.Component {
         try {
             const response = (await instance.get(`/${entity}/${channel.messageable_id}/messages`))
 
-            channel.messages = response.data.data;
-
-            this.setState({channel});
+            setState((state) => {
+                let channel = state.channels.find(c => {
+                    return c.id === id;
+                });
+                if(channel) {
+                    const newChannel = {...channel}
+                    newChannel.messages = response.data.data;
+                    return ({...state, channel: newChannel})
+                }
+                return state
+            })
         } catch (e) {
             alert(e.response.data.message);
         }
     }
 
-    handleChatSearch = event => {
+    const handleChatSearch = event => {
         let search_query = event.target.value;
 
         if (search_query) {
             instance.get(`/search?search_query=${search_query}`).then(response => {
-                const channels = response.data.data
-                channels.map((chanel, index) => {
-                    chanel.id = index + 1
-                })
-                this.setState({channels});
+                setState((state) => {
+                    const channels = response.data.data
+                    channels.forEach((chanel, index) => {
+                        chanel.id = index + 1
+                    })
+                    
+                    return ({...state, channels})
+                });
             })
         }
     }
 
-    handleLogout = () => {
+    const handleLogout = () => {
         localStorage.removeItem('token');
         window.location.href = '/';
     }
 
-    handleSendMessage = (channel_id, text) => {
-        let channel = this.state.channels.find(c => {
+    const handleSendMessage = (channel_id, text) => {
+        let channel = state.channels.find(c => {
             return c.id === channel_id;
         });
 
@@ -96,23 +108,21 @@ export class Chat extends React.Component {
         instance.post(`/${entity}/${channel.messageable_id}/messages`, {
             message: text
         }).then(() => {
-            this.handleChannelSelect(channel.id)
+            handleChannelSelect(channel.id)
         })
 
     }
 
-    render() {
-        return (
-            <div className='chat-app'>
-                <ChannelList channels={this.state.channels} onSelectChannel={this.handleChannelSelect}
-                             onChatSearch={this.handleChatSearch}/>
-                <MessagesPanel onSendMessage={this.handleSendMessage} channel={this.state.channel}
-                               user={this.state.user}/>
+    return (
+        <div className='chat-app'>
+            <ChannelList channels={state.channels} onSelectChannel={handleChannelSelect}
+                         onChatSearch={handleChatSearch}/>
+            <MessagesPanel onSendMessage={handleSendMessage} channel={state.channel}
+                           user={state.user}/>
 
-                <span onClick={this.handleLogout}>
-                    Logout
-                </span>
-            </div>
-        );
-    }
+            <span onClick={handleLogout}>
+                Logout
+            </span>
+        </div>
+    );
 }
