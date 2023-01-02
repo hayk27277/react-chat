@@ -122,10 +122,6 @@ export const Chat = () => {
                          onChatSearch={handleChatSearch}/>
             <MessagesPanel onSendMessage={handleSendMessage} channel={state.channel}
                            user={state.user}/>
-
-            <span onClick={handleLogout}>
-                Logout
-            </span>
         </div>
     );
 }
